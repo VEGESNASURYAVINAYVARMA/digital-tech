@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ group.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body{
+            background:#f4f6fb;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+        .card-box{
+            border:none;
+            border-radius:18px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.06);
+        }
+        .summary-card{
+            border-radius:18px;
+            padding:20px;
+            color:#fff;
+        }
+        .bg1{ background:#0d6efd; }
+        .bg2{ background:#198754; }
+        .bg3{ background:#fd7e14; }
+        .member-pill{
+            display:inline-block;
+            background:#eef3ff;
+            color:#1c3d7a;
+            padding:8px 14px;
+            border-radius:50px;
+            margin:5px 8px 5px 0;
+            font-size:14px;
+            font-weight:600;
+        }
+        .split-card{
+            background:#111;
+            color:#fff;
+            border-radius:22px;
+            padding:22px;
+        }
+        .split-item{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:12px 0;
+            border-bottom:1px solid rgba(255,255,255,0.08);
+        }
+        .split-item:last-child{
+            border-bottom:none;
+        }
+        .avatar-circle{
+            width:36px;
+            height:36px;
+            border-radius:50%;
+            background:#7c4dff;
+            color:#fff;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:bold;
+            margin-right:10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ group.name }}</h2>
+        <a href="{% url 'groups_list' %}" class="btn btn-secondary">Back to Groups</a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="summary-card bg1">
+                <h6>Total Group Expense</h6>
+                <h3>₹{{ total_group_amount }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card bg2">
+                <h6>Total Members</h6>
+                <h3>{{ member_count }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="summary-card bg3">
+                <h6>Total Expense Entries</h6>
+                <h3>{{ expenses|length }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-box p-4 mb-4">
+        <h4 class="mb-3">Members</h4>
+        {% for member in members %}
+            <span class="member-pill">{{ member.name }}</span>
+        {% empty %}
+            <p>No members found.</p>
+        {% endfor %}
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card card-box p-4">
+                <h4 class="mb-3">Expense History</h4>
+
+                {% for item in expenses %}
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ item.title }}</h5>
+                            <small class="text-muted">
+                                Paid by {{ item.paid_by }} |
+                                Total ₹{{ item.total_amount }} |
+                                Per person ₹{{ item.per_person }}
+                            </small>
+                        </div>
+                        <span class="badge bg-primary">Split Evenly</span>
+                    </div>
+
+                    <div class="mt-3">
+                        <strong>Members Split:</strong>
+                        <ul class="list-group mt-2">
+                            {% for share in item.shares %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>{{ share.friend.name }}</span>
+                                <span>₹{{ share.share_amount }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% empty %}
+                <p>No split expenses added yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="split-card">
+                <div class="text-center mb-4">
+                    <div style="font-size:14px; opacity:.7;">Group Total</div>
+                    <div style="font-size:42px; font-weight:700;">₹{{ total_group_amount }}</div>
+                </div>
+
+                <div class="mb-3" style="font-size:18px; font-weight:600;">Who Owes Whom</div>
+
+                {% for item in settlements %}
+                <div class="split-item">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-circle">{{ item.debtor|first|upper }}</div>
+                        <div>
+                            <div style="font-weight:600;">{{ item.debtor }}</div>
+                            <div style="font-size:13px; opacity:.7;">owes {{ item.creditor }}</div>
+                        </div>
+                    </div>
+                    <div style="font-weight:700;">₹{{ item.amount }}</div>
+                </div>
+                {% empty %}
+                <div class="text-center" style="opacity:.7;">No pending balances</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <title>Groups</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body {
@@ -123,31 +122,7 @@
             box-shadow: 0 6px 24px rgba(0,0,0,0.05);
         }
 
-        .summary-card {
-            padding: 22px;
-            border-radius: 20px;
-            color: #fff;
-            min-height: 120px;
-        }
-
-        .summary-card h6 {
-            font-size: 15px;
-            margin-bottom: 10px;
-            opacity: 0.95;
-        }
-
-        .summary-card h3 {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .bg1 { background: linear-gradient(135deg, #0d6efd, #3d8bfd); }
-        .bg2 { background: linear-gradient(135deg, #198754, #20a56b); }
-        .bg3 { background: linear-gradient(135deg, #fd7e14, #ff9838); }
-        .bg4 { background: linear-gradient(135deg, #6f42c1, #8b5cf6); }
-
-        .welcome-title {
+        .page-title {
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 24px;
@@ -159,16 +134,16 @@
             padding: 12px 14px;
         }
 
+        .btn-primary,
+        .btn-danger,
         .btn-success {
             border-radius: 12px;
-            padding: 10px 18px;
             font-weight: 600;
         }
 
-        .list-group-item {
-            border-radius: 12px !important;
-            margin-bottom: 10px;
-            border: 1px solid #eef0f4;
+        .group-summary {
+            font-size: 14px;
+            color: #6b7280;
         }
 
         .modal-content {
@@ -231,85 +206,48 @@
     </div>
 </nav>
 
-<div class="container">
-    <div class="welcome-title">Welcome, {{ request.user.username }}</div>
+<div class="container py-3">
+    <div class="page-title">Groups</div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="summary-card bg1">
-                <h6>Total Personal Expenses</h6>
-                <h3>₹{{ total_personal }}</h3>
+    <div class="card card-box p-4 mb-4">
+        <h4 class="mb-3">Create Group</h4>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.name.label_tag }}
+                {{ form.name }}
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card bg2">
-                <h6>Total Friends</h6>
-                <h3>{{ total_friends }}</h3>
+            <div class="mb-3">
+                <label class="form-label">Select Members</label>
+                <div class="border rounded p-3 bg-light">
+                    {{ form.members }}
+                </div>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card bg3">
-                <h6>Active Groups</h6>
-                <h3>{{ total_groups }}</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card bg4">
-                <h6>Split Expenses</h6>
-                <h3>{{ total_split_expenses }}</h3>
-            </div>
-        </div>
+            <button class="btn btn-primary">Create Group</button>
+        </form>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-6">
-            <div class="card card-box p-4">
-                <h4 class="mb-3">Monthly Expenses</h4>
-                <canvas id="expenseChart"></canvas>
-            </div>
-        </div>
-
-        <div class="col-lg-6">
-            <div class="card card-box p-4">
-                <h4 class="mb-3">Add Personal Expense</h4>
-
-                <form method="POST">
-                    {% csrf_token %}
-                    <input type="text" name="name" class="form-control mb-3" placeholder="Expense Name" required>
-                    <input type="number" name="amount" step="0.01" class="form-control mb-3" placeholder="Amount" required>
-                    <input type="date" name="date" class="form-control mb-3" required>
-
-                    <div class="form-check mb-3">
-                        <input type="checkbox" id="longterm" name="is_long_term" class="form-check-input">
-                        <label class="form-check-label" for="longterm">Long Term Liability</label>
+    <div class="card card-box p-4">
+        <h4 class="mb-3">Group List</h4>
+        <div class="list-group">
+            {% for item in groups %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">{{ item.group.name }}</h6>
+                    <div class="group-summary">
+                        Members: {{ item.members_count }} |
+                        Total Shared: ₹{{ item.total_amount }}
                     </div>
-
-                    <div id="longFields" style="display:none;">
-                        <input type="date" name="end_date" class="form-control mb-3">
-                        <input type="number" name="interest_rate" class="form-control mb-3" placeholder="Interest Rate (%)">
-                    </div>
-
-                    <button class="btn btn-success">Add Expense</button>
-                </form>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'group_detail' item.group.id %}" class="btn btn-sm btn-success">View</a>
+                    <a href="{% url 'delete_group' item.group.id %}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <div class="card card-box p-4 mt-4">
-        <h4 class="mb-3">Recent Expenses</h4>
-        <ul class="list-group">
-            {% for e in expenses %}
-            <li class="list-group-item">
-                <strong>{{ e.name }}</strong> - ₹{{ e.amount }} - {{ e.date }}
-                {% if e.is_long_term %}
-                <br>
-                <small class="text-muted">End Date: {{ e.end_date }} | Interest: {{ e.interest_rate }}%</small>
-                {% endif %}
-            </li>
             {% empty %}
-            <li class="list-group-item">No expenses yet</li>
+            <div class="list-group-item">No groups created yet</div>
             {% endfor %}
-        </ul>
+        </div>
     </div>
 </div>
 
@@ -335,38 +273,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-document.getElementById("longterm").addEventListener("change", function () {
-    document.getElementById("longFields").style.display = this.checked ? "block" : "none";
-});
-
-const labels = JSON.parse('{{ labels|escapejs }}');
-const data = JSON.parse('{{ data|escapejs }}');
-
-const ctx = document.getElementById('expenseChart').getContext('2d');
-
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: 'Expenses',
-            data: data,
-            backgroundColor: '#0d6efd',
-            borderRadius: 8
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            y: {
-                beginAtZero: true
-            }
-        }
-    }
-});
-</script>
 
 </body>
 </html>
